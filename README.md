@@ -1,0 +1,197 @@
+# AI-Scan-Interceptor
+
+**企業ネットワークから外部 AI サービスへのプロンプト送信を可視化・制御する、自前ホスト可能なオープンソース DLP ゲートウェイ。**
+
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8.svg)](https://go.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg)](https://docs.docker.com/compose/)
+[![Status](https://img.shields.io/badge/Status-Beta-orange.svg)]()
+
+[English README](./README.en.md) | 日本語
+
+---
+
+## なぜ AI-Scan-Interceptor が必要か
+
+ChatGPT、Claude、Gemini といった生成 AI サービスの社内利用が当たり前になりつつあります。一方で、**従業員が顧客情報・ソースコード・契約書・個人情報をプロンプトに貼り付け、外部 AI に送信してしまう**事故は、もはや珍しいものではありません。
+
+既存の DLP やプロキシ製品の多くはクラウド型・ブラックボックス・高額で、検出ロジックを自社で監査することができません。
+
+**AI-Scan-Interceptor は、生成 AI に特化した DLP を、Docker Compose 一発で自社ネットワーク内に立ち上げ、検出ロジックを完全に可視化することを目的に作られたオープンソースプロダクトです。**
+
+---
+
+## 主要機能
+
+- **AI サービス特化のプロンプト抽出**  
+  ChatGPT / Claude / Gemini のリクエストから、エンドユーザーの入力テキストを正確に抽出します。
+- **Anthropic 直接インターセプト（uTLS）**  
+  HTTP/2 + uTLS フィンガープリント対策により、Claude API トラフィックも取りこぼしません。
+- **ICAP (RFC 3507) ベースのポリシーエンジン**  
+  Squid と組み合わせた汎用的なフロー。正規表現・キーワード・分類ルールを YAML で記述できます。
+- **エンドポイント Agent (ai-scan-connect)**  
+  Windows / macOS / Linux にプロキシ設定と CA 証明書を自動配布。mTLS で社外利用も保護。
+- **Web ダッシュボード**  
+  リアルタイムでプロンプトログを閲覧、ユーザー別の利用統計、ポリシー違反のアラート。
+- **Slack / Webhook / SMTP 通知**  
+  検出時に即座に管理者へ通知。
+- **完全自前ホスト**  
+  外部 SaaS への依存ゼロ。プロンプト内容が第三者のクラウドに送信されることはありません。
+
+---
+
+## アーキテクチャ
+
+```
+[エンドポイント] (Windows / macOS / Linux)
+    │  HTTPS_PROXY=ai-scan-connect:port
+    ▼
+┌─────────────────────────────────────────────┐
+│  ai-scan-connect (CA配布・mTLS client)       │
+└─────────────────────────────────────────────┘
+    │  mTLS
+    ▼
+┌─────────────────────────────────────────────┐
+│  tls-proxy :3128 (Go + uTLS)                │
+│    ├─ Anthropic Claude   → 直接抽出・ログ    │
+│    └─ それ以外 (OpenAI 等)                   │
+└─────────────────────────────────────────────┘
+                                  │
+                                  ▼
+              ┌────────────────────────────────┐
+              │  squid :3129 (TLS Bump)         │
+              └────────────────────────────────┘
+                                  │  ICAP REQMOD
+                                  ▼
+              ┌────────────────────────────────┐
+              │  icap-server :1344 (Go)         │
+              │   - prompt 抽出                  │
+              │   - policy 評価                  │
+              │   - ログ / アラート              │
+              └────────────────────────────────┘
+                                  │
+                                  ▼
+                        ┌──────────────────┐
+                        │  webui :8080      │
+                        │  (ダッシュボード) │
+                        └──────────────────┘
+```
+
+---
+
+## Quick Start
+
+### 必要なもの
+
+- Docker Engine 24+ / Docker Compose v2
+- Linux または WSL2（macOS / Windows でも動作確認済み）
+- 8080 / 3128 / 3129 / 1344 ポートが空いていること
+
+### 1. クローン & ビルド
+
+```bash
+git clone https://github.com/mshirakawa-ssp/ai-scan-interceptor.git
+cd ai-scan-interceptor
+make certs       # CA 証明書を生成（初回のみ）
+docker compose up -d --build
+```
+
+### 2. ダッシュボードへアクセス
+
+```
+http://localhost:8080
+```
+
+初期管理者アカウントは `admin / admin`（初回ログイン後に変更してください）。
+
+### 3. エンドポイントを接続
+
+ブラウザまたは OS のプロキシ設定で以下を指定：
+
+```
+HTTPS Proxy: 127.0.0.1:3128
+```
+
+`certs/squid-ca.pem` を OS / ブラウザの信頼済み CA にインポートしてください。
+
+### 4. テストする
+
+ブラウザで Claude や ChatGPT を開き、何か質問してみてください。ダッシュボードにプロンプトが記録されます。
+
+---
+
+## 検出例
+
+ダッシュボードに表示されるログサンプル：
+
+```json
+{
+  "timestamp": "2026-05-19T10:23:41+09:00",
+  "user": "alice@example.com",
+  "service": "claude.ai",
+  "policy_hit": "credit_card_number",
+  "severity": "high",
+  "action": "logged",
+  "prompt_preview": "次のカード番号 4111-****-****-1111 で決済テストを..."
+}
+```
+
+ポリシーは `config/policies.yaml` で定義します：
+
+```yaml
+policies:
+  - name: credit_card_number
+    pattern: '\b4[0-9]{3}[- ]?[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]{4}\b'
+    severity: high
+    action: alert
+  - name: my_company_secret
+    keywords: ["社外秘", "Confidential", "Internal Only"]
+    severity: medium
+    action: log
+```
+
+---
+
+## ライセンス
+
+本リポジトリのコードは **GNU Affero General Public License v3.0 (AGPL-3.0)** で公開されています。詳細は [LICENSE](./LICENSE) を参照してください。
+
+AGPL は、ネットワーク経由でのサービス提供時にもソース開示義務を課す強いコピーレフトライセンスです。**社内利用および自己ホストでの利用には何の制約もありません。**
+
+### Enterprise / 商用ライセンス
+
+以下のようなケースでは商用ライセンスをご検討ください：
+
+- AGPL の開示義務を回避したい SaaS / 組み込み利用
+- 商用サポート、SLA、優先パッチが必要
+- マネージドサービスとしての導入
+- 監査対応、コンプライアンスドキュメント、運用代行
+
+商用ライセンス・サポートのお問い合わせ： [secscanpro.com](https://www.secscanpro.com) / sales@secscanpro.com
+
+---
+
+## コントリビューション
+
+バグ報告・機能提案・ドキュメント改善・プルリクエスト、すべて歓迎します。  
+まずは [CONTRIBUTING.md](./CONTRIBUTING.md) と [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) をお読みください。
+
+セキュリティ脆弱性の報告は [SECURITY.md](./SECURITY.md) のフローに従ってください。
+
+---
+
+## 応援していただける方へ
+
+このプロジェクトが少しでも役に立った、あるいは「面白い」と感じていただけたら、ぜひ GitHub の Star をお願いします。Star はプロジェクト継続の最大のモチベーションになります。
+
+また、導入事例や運用 Tips を Issue や Discussions で共有していただけると、コミュニティ全体の財産になります。
+
+---
+
+## About
+
+AI-Scan-Interceptor は **SecScanPro 合同会社** が中心となって開発しているオープンソースプロジェクトです。
+
+- Web: [secscanpro.com](https://www.secscanpro.com)
+- 所在地: 東京都中央区
+- 代表: 白川 信

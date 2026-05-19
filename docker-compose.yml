@@ -1,0 +1,95 @@
+services:
+
+  tls-proxy:
+    build:
+      context: .
+      dockerfile: tls-proxy/Dockerfile
+    ports:
+      - "3128:3128"
+    volumes:
+      - ./certs:/ca:ro
+      - ./logs:/logs
+      - config-data:/config
+    environment:
+      PROXY_ADDR:       ":3128"
+      UPSTREAM_PROXY:   "squid:3129"
+      LOG_DIR:          "/logs"
+      CONFIG_DIR:       "/config"
+      CA_CERT:          "/ca/squid-ca.pem"
+      CA_KEY:           "/ca/squid-ca.key"
+      INTERCEPT_HOSTS:  "${INTERCEPT_HOSTS:-api.anthropic.com,a-api.anthropic.com,claude.ai}"
+    networks:
+      - proxy-net
+    depends_on:
+      - squid
+    restart: unless-stopped
+
+  squid:
+    build:
+      context: ./squid
+    expose:
+      - "3129"
+    volumes:
+      - ./certs:/etc/squid/ssl_cert:ro
+      - squid-cache:/var/cache/squid
+      - squid-logs:/var/log/squid
+    networks:
+      - proxy-net
+    depends_on:
+      - icap-server
+    restart: unless-stopped
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  icap-server:
+    build:
+      context: ./icap-server
+    expose:
+      - "1344"
+    volumes:
+      - ./logs:/logs
+      - config-data:/config
+    networks:
+      - proxy-net
+    environment:
+      ICAP_ADDR:       ":1344"
+      LOG_DIR:         "/logs"
+      CONFIG_DIR:      "/config"
+      WEBHOOK_URL:     "${WEBHOOK_URL:-}"
+      SMTP_HOST:       "${SMTP_HOST:-}"
+      SMTP_PORT:       "${SMTP_PORT:-587}"
+      SMTP_USER:       "${SMTP_USER:-}"
+      SMTP_PASS:       "${SMTP_PASS:-}"
+      SMTP_FROM:       "${SMTP_FROM:-}"
+      ALERT_EMAIL_TO:  "${ALERT_EMAIL_TO:-}"
+      SIEM_TYPE:       "${SIEM_TYPE:-}"
+      SIEM_URL:        "${SIEM_URL:-}"
+      SIEM_TOKEN:      "${SIEM_TOKEN:-}"
+      SIEM_INDEX:      "${SIEM_INDEX:-ai-scan}"
+    restart: unless-stopped
+
+  webui:
+    build:
+      context: ./webui
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./logs:/logs:ro
+      - config-data:/config
+    environment:
+      LOG_DIR:    "/logs"
+      CONFIG_DIR: "/config"
+    networks:
+      - proxy-net
+    restart: unless-stopped
+
+volumes:
+  squid-cache:
+  squid-logs:
+  config-data:
+
+networks:
+  proxy-net:
+    driver: bridge

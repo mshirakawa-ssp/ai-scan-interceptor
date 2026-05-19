@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'">
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<title>AI Scan Interceptor - ログダッシュボード</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #0d1530;
+    border-bottom: 1px solid #1e2f5c;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  header h1 { font-size: 18px; font-weight: 600; color: #60a5fa; }
+  header .subtitle { font-size: 12px; color: #64748b; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .settings-btn {
+    background: #2d3148;
+    border: 1px solid #1e40af;
+    color: #60a5fa;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .settings-btn:hover { background: #1e3a6e; }
+  .logout-btn {
+    background: transparent;
+    border: 1px solid #4b5563;
+    color: #94a3b8;
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .logout-btn:hover { background: #1f2937; color: #e2e8f0; }
+  .user-badge {
+    font-size: 12px;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .role-tag {
+    background: #172554;
+    color: #60a5fa;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 11px;
+  }
+  .role-tag.admin { background: #7c2d12; color: #fb923c; }
+  #status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+  #status-dot.loading { background: #f59e0b; }
+  #last-updated { font-size: 11px; color: #64748b; }
+
+  .filters {
+    background: #0d1530;
+    border-bottom: 1px solid #1e2f5c;
+    padding: 10px 24px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filters label { font-size: 12px; color: #94a3b8; margin-right: 4px; }
+  .filters select, .filters input[type="text"], .filters input[type="search"] {
+    background: #0f1117;
+    border: 1px solid #2d3148;
+    color: #e2e8f0;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 13px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .filters select:focus, .filters input[type="text"]:focus, .filters input[type="search"]:focus {
+    border-color: #2563eb;
+  }
+  .filters input[type="text"], .filters input[type="search"] { width: 220px; }
+  .filters input[type="search"]::-webkit-search-cancel-button { display: none; }
+  .checkbox-wrap { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+  .checkbox-wrap input[type="checkbox"] { accent-color: #2563eb; width: 14px; height: 14px; cursor: pointer; }
+  #count-badge {
+    margin-left: auto;
+    background: #2d3148;
+    border-radius: 12px;
+    padding: 2px 10px;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    padding: 16px 24px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    background: #0d1530;
+    color: #64748b;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 8px 12px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    border-bottom: 1px solid #2d3148;
+  }
+  tbody tr {
+    border-bottom: 1px solid #1e2130;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  tbody tr:hover { background: #1e2130; }
+  tbody tr.triggered-row { border-left: 3px solid #ef4444; }
+  tbody td { padding: 8px 12px; vertical-align: middle; }
+
+  .severity-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+  .sev-critical { background: #7f1d1d; color: #fca5a5; }
+  .sev-high     { background: #7c2d12; color: #fdba74; }
+  .sev-medium   { background: #713f12; color: #fde68a; }
+  .sev-low      { background: #1e3a5f; color: #93c5fd; }
+  .sev-none     { background: #1e2130; color: #64748b; }
+
+  .action-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+  }
+  .act-blocked   { background: #7f1d1d; color: #fca5a5; }
+  .act-masked    { background: #7c2d12; color: #fdba74; }
+  .act-warned    { background: #713f12; color: #fde68a; }
+  .act-monitored { background: #1e3a5f; color: #93c5fd; }
+  .act-passed    { background: #1e2130; color: #64748b; }
+
+  .alert-icon { color: #ef4444; font-size: 16px; }
+  .no-alert { color: #1e2130; font-size: 16px; }
+
+  .prompt-cell { max-width: 320px; }
+  .prompt-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #cbd5e1;
+  }
+
+  .rule-ids { font-size: 11px; color: #2563eb; max-width: 200px; }
+  .rule-id-tag {
+    display: inline-block;
+    background: #172554;
+    border: 1px solid #1e40af;
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin: 1px 2px 1px 0;
+    white-space: nowrap;
+  }
+
+  .ts { color: #64748b; white-space: nowrap; font-size: 12px; }
+  .service { font-weight: 500; color: #60a5fa; }
+  .client-ip { font-family: monospace; color: #94a3b8; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 24px;
+    color: #475569;
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #0d1530;
+    border: 1px solid #1e2f5c;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 760px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #1e2f5c;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .modal-header h2 { font-size: 15px; font-weight: 600; flex: 1; }
+  .modal-close {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .modal-close:hover { background: #2d3148; color: #e2e8f0; }
+  .modal-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+  .detail-row { display: flex; flex-direction: column; gap: 4px; }
+  .detail-label { font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em; }
+  .detail-value { color: #e2e8f0; word-break: break-all; }
+  .prompt-full {
+    background: #0f1117;
+    border: 1px solid #2d3148;
+    border-radius: 6px;
+    padding: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #cbd5e1;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0f1117; }
+  ::-webkit-scrollbar-thumb { background: #2d3148; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>AI Scan Interceptor</h1>
+    <div class="subtitle">ログダッシュボード</div>
+  </div>
+  <div class="header-right">
+    <div class="user-badge" id="user-badge" style="display:none">
+      <span id="user-name"></span>
+      <span id="user-role-tag" class="role-tag"></span>
+    </div>
+    <button id="users-btn" class="settings-btn" style="display:none">👥 ユーザー管理</button>
+    <button id="settings-btn" class="settings-btn">⚙ 設定</button>
+    <button id="logout-btn" class="logout-btn" style="display:none">ログアウト</button>
+    <div id="status-dot"></div>
+    <span id="last-updated">--</span>
+  </div>
+</header>
+
+<div class="filters">
+  <div>
+    <label for="svc-select">サービス</label>
+    <select id="svc-select">
+      <option value="">すべて</option>
+    </select>
+  </div>
+  <div>
+    <label for="sev-select">重大度</label>
+    <select id="sev-select">
+      <option value="">すべて</option>
+      <option value="critical">Critical</option>
+      <option value="high">High</option>
+      <option value="medium">Medium</option>
+      <option value="low">Low</option>
+    </select>
+  </div>
+  <label class="checkbox-wrap">
+    <input type="checkbox" id="alert-only">
+    アラートのみ
+  </label>
+  <div>
+    <label for="search-input">検索</label>
+    <input type="search" id="search-input" placeholder="プロンプト / キーワード / ルールID...">
+  </div>
+  <div>
+    <label for="exclude-svc-input">除外サービス</label>
+    <input type="search" id="exclude-svc-input" placeholder="例: Claude-API" style="width:160px">
+  </div>
+  <button id="reset-filters-btn" title="フィルターをリセット" style="background:none;border:1px solid #2d3148;color:#64748b;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer">↺ リセット</button>
+  <span id="count-badge">0 件</span>
+</div>
+
+<div class="table-wrap">
+  <table id="log-table">
+    <thead>
+      <tr>
+        <th>タイムスタンプ</th>
+        <th>サービス</th>
+        <th>重大度</th>
+        <th>アクション</th>
+        <th>クライアントIP</th>
+        <th>プロンプト</th>
+        <th>ルールID</th>
+      </tr>
+    </thead>
+    <tbody id="log-tbody"></tbody>
+  </table>
+  <div id="empty-state" class="empty-state" style="display:none">
+    <div class="icon">📭</div>
+    <div>ログが見つかりません</div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <h2>ログ詳細</h2>
+      <button class="modal-close" id="modal-close" aria-label="閉じる">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-overlay">
+  <div class="modal" style="max-width:920px">
+    <div class="modal-header">
+      <h2>ポリシー設定</h2>
+      <button class="modal-close" id="settings-close">&times;</button>
+    </div>
+    <div class="modal-body" id="settings-body">
+      <div class="detail-row">
+        <div class="detail-label">グローバルモード</div>
+        <select id="global-mode-select" style="background:#0f1117;border:1px solid #2d3148;color:#e2e8f0;border-radius:6px;padding:6px 12px;font-size:13px;width:100%">
+          <option value="monitor">Monitor — ログのみ（通知なし）</option>
+          <option value="warn">Warn — ログ＋通知（デフォルト）</option>
+          <option value="block">Block — リクエストを拒否（403）</option>
+          <option value="mask">Mask — キーワードを [REDACTED] に置換</option>
+        </select>
+      </div>
+      <div class="detail-row" id="service-modes-section">
+        <div class="detail-label">サービス別モード上書き</div>
+        <div id="service-modes-list"></div>
+        <button id="add-service-btn" style="margin-top:8px;background:#2d3148;border:1px solid #1e40af;color:#60a5fa;border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer">＋ サービスを追加</button>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
+        <button id="settings-cancel" style="background:#2d3148;border:none;color:#94a3b8;border-radius:6px;padding:7px 18px;cursor:pointer">キャンセル</button>
+        <button id="settings-save" style="background:#2563eb;border:none;color:#fff;border-radius:6px;padding:7px 18px;cursor:pointer;font-weight:600">保存</button>
+      </div>
+      <div id="settings-msg" style="font-size:12px;text-align:right;min-height:18px"></div>
+
+      <!-- Log Retention Section (admin only) -->
+      <div id="log-retention-section" class="detail-row" style="display:none;margin-top:16px;border-top:1px solid #1e2f5c;padding-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="detail-label" style="margin:0">ログ保持期間（管理者専用）</div>
+          <span id="retention-msg" style="font-size:11px;min-height:16px"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <label style="font-size:12px;color:#94a3b8">保持日数</label>
+          <input id="retention-days-input" type="number" min="1" max="3650" value="30"
+            style="width:90px;background:#0f1117;border:1px solid #1e2f5c;color:#e2e8f0;border-radius:6px;padding:5px 8px;font-size:13px;outline:none">
+          <span style="font-size:12px;color:#64748b">日（1〜3650）</span>
+          <button id="retention-save-btn" style="background:#2563eb;border:none;color:#fff;border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:600">保存</button>
+        </div>
+        <div style="font-size:11px;color:#475569;margin-top:6px">設定した日数を超えたログファイルは6時間ごとに自動削除されます</div>
+      </div>
+
+      <!-- Notification Settings Section (admin only) -->
+      <div id="notification-section" style="display:none;margin-top:16px;border-top:1px solid #1e2f5c;padding-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="detail-label" style="margin:0">アラート通知設定（管理者専用）</div>
+          <span id="notif-msg" style="font-size:11px;min-height:16px"></span>
+        </div>
+        <!-- Slack -->
+        <div style="margin-bottom:14px">
+          <div style="font-size:12px;font-weight:600;color:#60a5fa;margin-bottom:8px">Slack Webhook</div>
+          <input id="notif-slack-url" type="text" placeholder="https://hooks.slack.com/services/..." autocomplete="off"
+            style="width:100%;background:#0f1117;border:1px solid #1e2f5c;color:#e2e8f0;border-radius:6px;padding:6px 10px;font-size:12px;outline:none;font-family:monospace">
+        </div>
+        <!-- Email -->
+        <div style="margin-bottom:14px">
+          <div style="font-size:12px;font-weight:600;color:#60a5fa;margin-bottom:8px">メール通知</div>
+          <div style="display:grid;grid-template-columns:1fr 80px;gap:8px;margin-bottom:6px">
+            <input id="notif-smtp-host" type="text" placeholder="SMTPホスト（例: smtp.gmail.com）" autocomplete="off"
+              style="background:#0f1117;border:1px solid #1e2f5c;color:#e2e8f0;border-radius:6px;padding:6px 10px;font-size:12px;outline:none">
+            <input id="notif-smtp-port" type="text" placeholder="ポート" value="587" autocomplete="off"
+              style="background:#0f1117;border:1px solid #1e2f5c;color:#e2e8f0;border-radius:6px;padding:6px 10px;font-size:12px;outline:none">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">
+            <input id="notif-smtp-user" type="text" placeholder="SMTPユーザー名" autocomplete="off"
+              style="background:#0f1117;border:1px solid #1e2f5c;color:#e2e8f0;border-radius:6px;padding:6px 10px;font-size:12px;outline:none">
+            <input id="notif-smtp-pass" type="password" placeholder="SMTPパスワード" autocomplete="new-password"
+              style="background:#0f1117;border:1px solid #1e2f5c;color:#e2e8f0;border-radius:6px;padding:6px 10px;font-size:12px;outline:none">
+          </div>
+          <input id="notif-smtp-from" type="text" placeholder="送信元アドレス（例: alert@yourcompany.com）" autocomplete="off"
+            style="width:100%;background:#0f1117;border:1px solid #1e2f5c;color:#e2e8f0;border-radius:6px;padding:6px 10px;font-size:12px;outline:none;margin-bottom:6px">
+          <input id="notif-email-to" type="text" placeholder="送信先アドレス（複数はカンマ区切り）" autocomplete="off"
+            style="width:100%;background:#0f1117;border:1px solid #1e2f5c;color:#e2e8f0;border-radius:6px;padding:6px 10px;font-size:12px;outline:none">
+        </div>
+        <div style="display:flex;justify-content:flex-end">
+          <button id="notif-save-btn" style="background:#2563eb;border:none;color:#fff;border-radius:6px;padding:6px 18px;font-size:12px;cursor:pointer;font-weight:600">保存</button>
+        </div>
+        <div style="font-size:11px;color:#475569;margin-top:6px">設定は即時反映されます。パスワードを変更しない場合は空欄のままにしてください。</div>
+      </div>
+
+      <!-- Unified Rules Section -->
+      <div class="detail-row" style="margin-top:16px;border-top:1px solid #2d3148;padding-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div class="detail-label" style="margin:0">検知ルール管理</div>
+          <div style="display:flex;gap:8px">
+            <button id="reset-rules-btn" style="background:#2d3148;border:1px solid #ef4444;color:#fca5a5;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">デフォルトに戻す</button>
+            <button id="add-rule-btn" style="background:#2d3148;border:1px solid #1e40af;color:#60a5fa;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer">＋ ルールを追加</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="rules-table" style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead>
+              <tr>
+                <th style="text-align:center;color:#64748b;font-weight:500;padding:4px 6px;border-bottom:1px solid #2d3148;white-space:nowrap">有効</th>
+                <th style="text-align:left;color:#64748b;font-weight:500;padding:4px 6px;border-bottom:1px solid #2d3148">ソース</th>
+                <th style="text-align:left;color:#64748b;font-weight:500;padding:4px 6px;border-bottom:1px solid #2d3148">ID</th>
+                <th style="text-align:left;color:#64748b;font-weight:500;padding:4px 6px;border-bottom:1px solid #2d3148">重大度</th>
+                <th style="text-align:left;color:#64748b;font-weight:500;padding:4px 6px;border-bottom:1px solid #2d3148">説明</th>
+                <th style="text-align:left;color:#64748b;font-weight:500;padding:4px 6px;border-bottom:1px solid #2d3148">パターン</th>
+                <th style="text-align:center;color:#64748b;font-weight:500;padding:4px 6px;border-bottom:1px solid #2d3148;white-space:nowrap">Mask</th>
+                <th style="padding:4px 6px;border-bottom:1px solid #2d3148"></th>
+              </tr>
+            </thead>
+            <tbody id="rules-tbody"></tbody>
+          </table>
+        </div>
+        <div id="rules-empty" style="font-size:12px;color:#475569;padding:8px 0;display:none">ルールがありません</div>
+        <!-- Inline add form -->
+        <div id="rule-form" style="display:none;margin-top:10px;background:#0f1117;border:1px solid #2d3148;border-radius:8px;padding:12px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px">ID</label>
+              <input id="rule-id" type="text" placeholder="例: MY-RULE-001" autocomplete="off" style="width:100%;background:#1a1d27;border:1px solid #2d3148;color:#e2e8f0;border-radius:6px;padding:5px 8px;font-size:12px;outline:none">
+            </div>
+            <div>
+              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px">重大度</label>
+              <select id="rule-severity" style="width:100%;background:#1a1d27;border:1px solid #2d3148;color:#e2e8f0;border-radius:6px;padding:5px 8px;font-size:12px">
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium" selected>Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1">
+              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px">説明</label>
+              <input id="rule-description" type="text" placeholder="例: 社内プロジェクトコード漏洩" style="width:100%;background:#1a1d27;border:1px solid #2d3148;color:#e2e8f0;border-radius:6px;padding:5px 8px;font-size:12px;outline:none">
+            </div>
+            <div style="grid-column:1/-1">
+              <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px">パターン（正規表現）</label>
+              <input id="rule-pattern" type="text" placeholder="例: PROJ-[0-9]{4}" style="width:100%;background:#1a1d27;border:1px solid #2d3148;color:#e2e8f0;border-radius:6px;padding:5px 8px;font-size:12px;font-family:monospace;outline:none">
+            </div>
+            <div style="grid-column:1/-1">
+              <label style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input id="rule-mask-body" type="checkbox" style="accent-color:#2563eb;width:13px;height:13px">
+                本文中のマッチ箇所をマスクする（MaskBody）
+              </label>
+            </div>
+          </div>
+          <div id="rule-form-msg" style="font-size:11px;color:#ef4444;min-height:16px;margin-bottom:6px"></div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button id="rule-cancel-btn" style="background:#2d3148;border:none;color:#94a3b8;border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer">キャンセル</button>
+            <button id="rule-add-btn" style="background:#2563eb;border:none;color:#fff;border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:600">追加</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- User Management Modal -->
+<div id="users-overlay" class="modal-overlay">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <h2>ユーザー管理</h2>
+      <button id="users-modal-close" class="modal-close">&times;</button>
+    </div>
+    <div style="padding:16px 20px">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button id="add-user-btn" style="background:#2563eb;border:none;color:#fff;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;font-weight:600">+ ユーザー追加</button>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr>
+            <th style="text-align:left;color:#64748b;font-weight:500;padding:4px 8px;border-bottom:1px solid #2d3148">ユーザー名</th>
+            <th style="text-align:left;color:#64748b;font-weight:500;padding:4px 8px;border-bottom:1px solid #2d3148">ロール</th>
+            <th style="text-align:left;color:#64748b;font-weight:500;padding:4px 8px;border-bottom:1px solid #2d3148">作成日</th>
+            <th style="padding:4px 8px;border-bottom:1px solid #2d3148"></th>
+          </tr>
+        </thead>
+        <tbody id="users-tbody"></tbody>
+      </table>
+      <!-- Add user form -->
+      <div id="add-user-form" style="display:none;margin-top:14px;background:#0f1117;border:1px solid #2d3148;border-radius:8px;padding:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+          <div>
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px">ユーザー名</label>
+            <input id="new-username" type="text" placeholder="username" autocomplete="off" style="width:100%;background:#1a1d27;border:1px solid #2d3148;color:#e2e8f0;border-radius:6px;padding:5px 8px;font-size:12px;outline:none">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px">パスワード（12文字以上）</label>
+            <input id="new-password" type="password" placeholder="password" autocomplete="new-password" style="width:100%;background:#1a1d27;border:1px solid #2d3148;color:#e2e8f0;border-radius:6px;padding:5px 8px;font-size:12px;outline:none">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#64748b;display:block;margin-bottom:3px">ロール</label>
+            <select id="new-role" style="width:100%;background:#1a1d27;border:1px solid #2d3148;color:#e2e8f0;border-radius:6px;padding:5px 8px;font-size:12px">
+              <option value="user">user</option>
+              <option value="admin">admin</option>
+            </select>
+          </div>
+        </div>
+        <div id="add-user-msg" style="font-size:11px;color:#ef4444;min-height:16px;margin-bottom:6px"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="add-user-cancel" style="background:#2d3148;border:none;color:#94a3b8;border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer">キャンセル</button>
+          <button id="add-user-save" style="background:#2563eb;border:none;color:#fff;border-radius:6px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:600">作成</button>
+        </div>
+      </div>
+      <div id="users-msg" style="font-size:12px;color:#ef4444;min-height:18px;margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

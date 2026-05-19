@@ -1,0 +1,9 @@
+# build artifacts
+/ai-scan-connect
+/ai-scan-connect.exe
+/dist/
+
+# editor
+*.swp
+.vscode/
+.idea/

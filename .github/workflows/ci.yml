@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  go-build-test:
+    name: Go build & test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [tls-proxy, icap-server, webui, connect]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache: true
+          cache-dependency-path: ${{ matrix.component }}/go.sum
+
+      - name: Build (${{ matrix.component }})
+        working-directory: ${{ matrix.component }}
+        run: go build ./...
+
+      - name: Test (${{ matrix.component }})
+        working-directory: ${{ matrix.component }}
+        run: go test ./... -race -coverprofile=coverage.out -covermode=atomic
+
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.component }}
+          path: ${{ matrix.component }}/coverage.out
+
+  lint:
+    name: Lint (golangci-lint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  docker-build:
+    name: Docker Compose build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build (no push)
+        run: docker compose build
+
+  license-check:
+    name: License header check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: AGPL header presence
+        run: |
+          # AGPL ライセンスファイル本体の存在確認
+          if [ ! -f LICENSE ]; then
+            echo "LICENSE file missing"
+            exit 1
+          fi
+          if ! grep -q "GNU Affero General Public License" LICENSE; then
+            echo "LICENSE file does not reference AGPL"
+            exit 1
+          fi
+
+  container-scan:
+    name: Container vulnerability scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build images
+        run: docker compose build
+
+      - name: Run Trivy on the built images
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'ai-scan-interceptor-tls-proxy:latest'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      - name: Upload scan results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
