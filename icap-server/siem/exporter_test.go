@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -83,11 +84,12 @@ func TestElasticsearchExporter(t *testing.T) {
 
 func TestAsyncQueueDrop(t *testing.T) {
 	blocked := make(chan struct{})
-	// sender blocks until test releases it — fills the queue immediately
-	calls := 0
+	// sender blocks until test releases it — fills the queue immediately.
+	// Use atomic for calls because multiple workers increment concurrently.
+	var calls atomic.Int64
 	e := newAsync("test", func(_ storage.LogEntry) error {
 		<-blocked
-		calls++
+		calls.Add(1)
 		return nil
 	})
 
@@ -98,15 +100,16 @@ func TestAsyncQueueDrop(t *testing.T) {
 	close(blocked) // release workers
 	e.Close()
 
+	got := int(calls.Load())
 	// Workers may have dequeued up to workerCount items before the queue filled.
 	// So calls <= queueCap + workerCount (overflow items were dropped).
 	maxCalls := queueCap + workerCount
-	if calls > maxCalls {
+	if got > maxCalls {
 		t.Errorf("expected at most %d calls (queueCap=%d + workers=%d), got %d",
-			maxCalls, queueCap, workerCount, calls)
+			maxCalls, queueCap, workerCount, got)
 	}
 	// Confirm at least some drops occurred (we sent 100 over capacity)
-	if calls == queueCap+100 {
+	if got == queueCap+100 {
 		t.Error("expected some drops but none occurred")
 	}
 }

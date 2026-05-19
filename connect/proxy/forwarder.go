@@ -50,6 +50,7 @@ type Forwarder struct {
 	// Logger for runtime diagnostics. nil -> log.Default().
 	Logger *log.Logger
 
+	mu       sync.Mutex
 	listener net.Listener
 }
 
@@ -114,7 +115,9 @@ func (f *Forwarder) ListenAndServe(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("forwarder: listen %s: %w", f.ListenAddr, err)
 	}
+	f.mu.Lock()
 	f.listener = ln
+	f.mu.Unlock()
 	f.logger().Printf("forwarder: listening on %s, upstream=%s fail_close=%v",
 		f.ListenAddr, f.InterceptorHostPort, f.FailClose)
 
@@ -144,11 +147,15 @@ func (f *Forwarder) ListenAndServe(ctx context.Context) error {
 }
 
 // Addr returns the bound address (only valid after ListenAndServe has bound).
+// Safe to call from a different goroutine than ListenAndServe.
 func (f *Forwarder) Addr() net.Addr {
-	if f.listener == nil {
+	f.mu.Lock()
+	ln := f.listener
+	f.mu.Unlock()
+	if ln == nil {
 		return nil
 	}
-	return f.listener.Addr()
+	return ln.Addr()
 }
 
 func (f *Forwarder) handle(ctx context.Context, c net.Conn) {
