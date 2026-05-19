@@ -1,0 +1,72 @@
+# PII (Personally Identifiable Information) detection rules.
+#
+# These rules detect common forms of personal data that should not be sent to
+# external generative AI services. Patterns are tuned to reduce false positives
+# (e.g. word-boundaries, length constraints, structural validation hints).
+#
+# severity: low | medium | high | critical
+# action:   log | alert | block | mask
+
+policies:
+  - name: credit_card_visa
+    description: "Visa credit card number (16 digits, starting with 4)."
+    pattern: '\b4[0-9]{3}[- ]?[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]{4}\b'
+    severity: high
+    action: alert
+    tags: [pii, pci-dss]
+
+  - name: credit_card_mastercard
+    description: "Mastercard credit card number (16 digits, 51-55 / 2221-2720 prefix)."
+    pattern: '\b(?:5[1-5][0-9]{2}|222[1-9]|22[3-9][0-9]|2[3-6][0-9]{2}|27[01][0-9]|2720)[- ]?[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]{4}\b'
+    severity: high
+    action: alert
+    tags: [pii, pci-dss]
+
+  - name: credit_card_amex
+    description: "American Express card number (15 digits, starting with 34 or 37)."
+    pattern: '\b3[47][0-9]{2}[- ]?[0-9]{6}[- ]?[0-9]{5}\b'
+    severity: high
+    action: alert
+    tags: [pii, pci-dss]
+
+  - name: credit_card_jcb
+    description: "JCB credit card number (16 digits, 3528-3589 prefix)."
+    pattern: '\b35(?:2[89]|[3-8][0-9])[0-9]{2}[- ]?[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]{4}\b'
+    severity: high
+    action: alert
+    tags: [pii, pci-dss]
+
+  - name: jp_phone_number
+    description: "Japanese phone number (mobile 070/080/090 or landline 0X-XXXX-XXXX)."
+    pattern: '\b0(?:[789]0[- ]?[0-9]{4}[- ]?[0-9]{4}|[1-9][- ]?[0-9]{4}[- ]?[0-9]{4}|[1-9][0-9][- ]?[0-9]{3}[- ]?[0-9]{4})\b'
+    severity: medium
+    action: log
+    tags: [pii, jp]
+
+  - name: jp_mynumber
+    description: "Japanese individual number (My Number, 12 digits, typically prefixed by keyword)."
+    pattern: '(?i)(?:マイナンバー|個人番号|my[\s_-]?number)[^0-9]{0,8}[0-9]{4}[- ]?[0-9]{4}[- ]?[0-9]{4}'
+    severity: critical
+    action: block
+    tags: [pii, jp, my-number-act]
+
+  - name: jp_passport_number
+    description: "Japanese passport number (1 letter + 7 digits, with context)."
+    pattern: '(?i)(?:passport|パスポート|旅券)[^A-Z0-9]{0,8}[A-Z]{1,2}[0-9]{7}\b'
+    severity: high
+    action: alert
+    tags: [pii, jp]
+
+  - name: us_ssn
+    description: "US Social Security Number (XXX-XX-XXXX). RE2-compatible; relies on action filters to suppress obvious test values."
+    pattern: '\b[0-9]{3}-[0-9]{2}-[0-9]{4}\b'
+    severity: critical
+    action: block
+    tags: [pii, us, gdpr]
+
+  - name: email_address_generic
+    description: "Generic email address. Useful as a baseline; combine with context for stronger signal."
+    pattern: '\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b'
+    severity: low
+    action: log
+    tags: [pii, contact]

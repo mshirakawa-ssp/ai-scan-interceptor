@@ -1,0 +1,60 @@
+# Confidentiality / compliance keyword rules.
+#
+# Detects explicit confidentiality markers and references to regulated data
+# categories (personal info, customer data, medical records). These rules rely
+# on keyword matching because the signals are linguistic rather than structural.
+#
+# severity: low | medium | high | critical
+# action:   log | alert | block | mask
+
+policies:
+  - name: confidentiality_marker
+    description: "Explicit confidentiality classification markers in JP / EN."
+    keywords:
+      - "社外秘"
+      - "極秘"
+      - "厳秘"
+      - "取扱注意"
+      - "Confidential"
+      - "CONFIDENTIAL"
+      - "Internal Only"
+      - "Internal Use Only"
+      - "Restricted"
+      - "Proprietary and Confidential"
+    severity: high
+    action: alert
+    tags: [confidentiality, classification]
+
+  - name: personal_information_keywords
+    description: "References to personal information categories (APPI / GDPR adjacent)."
+    keywords:
+      - "個人情報"
+      - "個人データ"
+      - "顧客情報"
+      - "お客様情報"
+      - "会員情報"
+      - "PII"
+      - "Personally Identifiable Information"
+      - "Personal Data"
+    severity: medium
+    action: alert
+    tags: [pii, appi, gdpr]
+
+  - name: medical_record_keywords
+    description: "Healthcare / patient data references (HIPAA / 医療法 / 個情法 配慮個人情報)."
+    keywords:
+      - "カルテ"
+      - "電子カルテ"
+      - "患者情報"
+      - "病歴"
+      - "診療記録"
+      - "受診歴"
+      - "処方箋"
+      - "医療記録"
+      - "Patient Record"
+      - "Medical Record"
+      - "PHI"
+      - "Protected Health Information"
+    severity: high
+    action: block
+    tags: [healthcare, hipaa, sensitive-personal-info]

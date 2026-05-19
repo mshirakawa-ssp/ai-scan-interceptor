@@ -1,0 +1,30 @@
+# Internal resource URL detection rules.
+#
+# Detects URLs pointing to private source code repositories or internal SaaS
+# resources. These are usually a strong indicator that an employee is pasting
+# internal context (issue text, code, design docs) into an external AI service.
+#
+# severity: low | medium | high | critical
+# action:   log | alert | block | mask
+
+policies:
+  - name: github_private_repo_url
+    description: "GitHub repository URL with a known-private organisation. Replace org names with your own."
+    pattern: '(?i)https?://github\.com/(?:[A-Za-z0-9][A-Za-z0-9\-]{0,38})/(?:[A-Za-z0-9._\-]{1,100})(?:/(?:tree|blob|pull|issues)/[^\s]+)?'
+    severity: medium
+    action: alert
+    tags: [source-code, github, vcs]
+
+  - name: internal_jira_url
+    description: "Atlassian Jira / Confluence cloud URLs (subdomain on atlassian.net)."
+    pattern: '(?i)https?://[A-Za-z0-9\-]+\.atlassian\.net/(?:browse|wiki|jira)/[^\s]+'
+    severity: medium
+    action: alert
+    tags: [internal, jira, atlassian]
+
+  - name: internal_notion_url
+    description: "Notion workspace URLs (notion.so / notion.site) with a workspace-scoped page id."
+    pattern: '(?i)https?://(?:[A-Za-z0-9\-]+\.)?notion\.(?:so|site)/[A-Za-z0-9\-/]+[a-f0-9]{32}'
+    severity: medium
+    action: alert
+    tags: [internal, notion]

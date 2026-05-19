@@ -152,6 +152,48 @@ policies:
 
 ---
 
+## Available detection rules
+
+`config/policies/` 配下に、すぐに使えるスターター検出ルール集を同梱しています。カテゴリ別の YAML ファイルとして管理しており、必要なものだけを `include:` で取り込むことも、全部まとめて読み込むこともできます。
+
+| カテゴリ | ファイル | ルール数 | 内容 |
+|---|---|---|---|
+| PII | `config/policies/pii.yaml` | 9 | Visa / Mastercard / Amex / JCB のカード番号、日本の電話番号、マイナンバー、パスポート番号、米国 SSN、メールアドレス |
+| Credentials / Secrets | `config/policies/secrets.yaml` | 9 | AWS Access Key / Secret、Google API Key、GitHub Personal Access Token、OpenAI / Anthropic API Key、JWT、Slack Bot Token、PEM 形式の秘密鍵 |
+| Confidentiality | `config/policies/confidentiality.yaml` | 3 | 「社外秘」「Confidential」等の機密区分、個人情報・顧客情報キーワード、カルテ・患者情報など医療コンプラ |
+| Internal Resources | `config/policies/internal-resources.yaml` | 3 | GitHub リポジトリ URL、Atlassian Jira / Confluence、Notion ワークスペース URL |
+
+すべてのパターンは Go の `regexp` パッケージ（RE2 構文）で compile 可能であることを確認済みです。
+
+### カスタムルールを追加する
+
+1. `config/policies/` に新しい YAML を作成（既存ファイルを参考に）
+2. `config/policies/_index.yaml` の `include:` に追記
+3. ICAP サーバーをリロード（policy はホットリロード対応）
+
+```yaml
+# config/policies/_index.yaml
+version: 1
+include:
+  - pii.yaml
+  - secrets.yaml
+  - confidentiality.yaml
+  - internal-resources.yaml
+  - my-custom-rules.yaml   # ここに追加
+```
+
+各ルールは以下のフィールドを持ちます：
+
+- `name` — 一意な識別子（必須）
+- `description` — 人間向けの説明
+- `pattern` — RE2 正規表現（`pattern` か `keywords` のいずれか必須）
+- `keywords` — 文字列リスト（複数ヒットで OR）
+- `severity` — `low` / `medium` / `high` / `critical`
+- `action` — `log` / `alert` / `block` / `mask`
+- `tags` — 任意のタグ配列
+
+---
+
 ## ライセンス
 
 本リポジトリのコードは **GNU Affero General Public License v3.0 (AGPL-3.0)** で公開されています。詳細は [LICENSE](./LICENSE) を参照してください。

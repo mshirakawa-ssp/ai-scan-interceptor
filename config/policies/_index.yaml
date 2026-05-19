@@ -1,0 +1,18 @@
+# Aggregator that pulls in every category file under config/policies/.
+#
+# AI-Scan-Interceptor loaders that support an `include:` directive can use this
+# file as the single entry point. Loaders that do not yet support `include:`
+# can concatenate the listed files manually:
+#
+#   cat config/policies/pii.yaml \
+#       config/policies/secrets.yaml \
+#       config/policies/confidentiality.yaml \
+#       config/policies/internal-resources.yaml \
+#       > config/policies.yaml
+
+version: 1
+include:
+  - pii.yaml
+  - secrets.yaml
+  - confidentiality.yaml
+  - internal-resources.yaml
