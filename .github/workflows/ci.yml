@@ -34,9 +34,6 @@ jobs:
 
       - name: Test (${{ matrix.component }})
         working-directory: ${{ matrix.component }}
-        # Some integration/timing tests are flaky in CI's noisy scheduler.
-        # Treat as warning-level until test stability is improved.
-        continue-on-error: true
         run: go test ./... -race -coverprofile=coverage.out -covermode=atomic
 
       - name: Upload coverage
@@ -63,8 +60,8 @@ jobs:
 
       - name: golangci-lint (${{ matrix.component }})
         uses: golangci/golangci-lint-action@v6
-        # Lint is informational for now; many warnings are pre-existing
-        # in code paths inherited from rapid prototyping.
+        # Lint produces many pre-existing warnings inherited from rapid
+        # prototyping. Until those are addressed, lint is informational.
         continue-on-error: true
         with:
           version: latest
