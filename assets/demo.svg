@@ -1,0 +1,606 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 600" role="img"
+     aria-label="AI-Scan-Interceptor demo: terminal sets up the gateway, the user right-clicks an AWS access key in the AWS Console and copies it, then pastes it into Claude Desktop and clicks Send, but the request is blocked at the network egress (screen shakes), and the admin clicks the blocked event in the dashboard to see the exact intercepted prompt.">
+  <title>AI-Scan-Interceptor — 4-stage interactive demo</title>
+  <desc>28-second looping animation: (1) CLI server setup, (2) user copies AWS secret from AWS Console via right-click menu, (3) user pastes into Claude Desktop via right-click menu and clicks Send — screen shakes, blocked banner appears, (4) admin clicks the blocked event in the dashboard to inspect the intercepted prompt.</desc>
+
+  <defs>
+    <linearGradient id="terminalBar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#11111b"/>
+      <stop offset="1" stop-color="#181825"/>
+    </linearGradient>
+    <linearGradient id="browserBar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f1f3f4"/>
+      <stop offset="1" stop-color="#e8eaed"/>
+    </linearGradient>
+    <linearGradient id="awsHeader" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#232f3e"/>
+      <stop offset="1" stop-color="#161e2c"/>
+    </linearGradient>
+    <filter id="menuShadow" x="-20%" y="-10%" width="140%" height="130%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+      <feOffset dx="0" dy="2"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.4"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ============================================================== -->
+  <!-- STAGE 1: Terminal (0–4s)                                       -->
+  <!-- ============================================================== -->
+  <g opacity="0">
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.005;0.025;0.135;0.155;1"
+             dur="28s" repeatCount="indefinite"/>
+
+    <rect width="880" height="600" rx="10" ry="10" fill="#1e1e2e"/>
+    <path d="M0,10 a10,10 0 0 1 10,-10 h860 a10,10 0 0 1 10,10 v26 h-880 z" fill="url(#terminalBar)"/>
+    <circle cx="22" cy="18" r="6" fill="#f38ba8"/>
+    <circle cx="42" cy="18" r="6" fill="#f9e2af"/>
+    <circle cx="62" cy="18" r="6" fill="#a6e3a1"/>
+    <text x="440" y="23" text-anchor="middle" fill="#9399b2"
+          font-family="ui-monospace,SF Mono,Menlo,Consolas,monospace" font-size="12">~/ai-scan-interceptor — zsh</text>
+
+    <g font-family="ui-monospace,SF Mono,Menlo,Consolas,monospace" font-size="15">
+      <text x="32" y="92" fill="#cdd6f4"><tspan fill="#89b4fa">$</tspan> docker compose up -d</text>
+
+      <text x="32" y="135" fill="#a6e3a1">✓</text>
+      <text x="52" y="135" fill="#cdd6f4">ai-scan-connect ready
+        <tspan fill="#6c7086"> (mTLS, CA distributed)</tspan></text>
+
+      <text x="32" y="160" fill="#a6e3a1">✓</text>
+      <text x="52" y="160" fill="#cdd6f4">tls-proxy listening on :3128
+        <tspan fill="#6c7086"> (uTLS · JA3 mimic: Chrome 120)</tspan></text>
+
+      <text x="32" y="185" fill="#a6e3a1">✓</text>
+      <text x="52" y="185" fill="#cdd6f4">icap-server listening on :1344
+        <tspan fill="#6c7086"> (RFC 3507 policy engine)</tspan></text>
+
+      <text x="32" y="210" fill="#a6e3a1">✓</text>
+      <text x="52" y="210" fill="#cdd6f4">policies loaded:
+        <tspan fill="#cba6f7">24 rules</tspan>
+        <tspan fill="#6c7086"> (PII · secrets · confidentiality · internal)</tspan></text>
+
+      <text x="32" y="270" fill="#f9e2af" font-style="italic">
+        ▸ All traffic to api.anthropic.com / generativelanguage.googleapis.com / api.openai.com
+      </text>
+      <text x="32" y="290" fill="#f9e2af" font-style="italic">
+        ▸ now flows through the gateway. Detection logic is auditable in your repo.
+      </text>
+    </g>
+
+    <rect x="20" y="540" width="160" height="28" rx="14" ry="14" fill="#313244"/>
+    <text x="100" y="558" text-anchor="middle" fill="#cdd6f4"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13" font-weight="bold">STAGE 1 / 4</text>
+    <text x="200" y="558" fill="#9399b2"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">Server set up · gateway running</text>
+  </g>
+
+  <!-- ============================================================== -->
+  <!-- STAGE 2: AWS Console — copy access key (4–10s)                 -->
+  <!-- ============================================================== -->
+  <g opacity="0">
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.135;0.155;0.34;0.36;1"
+             dur="28s" repeatCount="indefinite"/>
+
+    <!-- browser body -->
+    <rect width="880" height="600" rx="10" ry="10" fill="#ffffff"/>
+
+    <!-- chrome -->
+    <path d="M0,10 a10,10 0 0 1 10,-10 h860 a10,10 0 0 1 10,10 v52 h-880 z" fill="url(#browserBar)"/>
+    <circle cx="22" cy="18" r="6" fill="#f38ba8"/>
+    <circle cx="42" cy="18" r="6" fill="#f9e2af"/>
+    <circle cx="62" cy="18" r="6" fill="#a6e3a1"/>
+    <rect x="90" y="22" width="700" height="26" rx="13" ry="13" fill="#ffffff" stroke="#dadce0" stroke-width="1"/>
+    <text x="105" y="40" fill="#5f6368"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">🔒 us-east-1.console.aws.amazon.com/iam/home#/users/alice/access-keys</text>
+
+    <!-- AWS header bar (orange/navy) -->
+    <rect x="0" y="62" width="880" height="40" fill="url(#awsHeader)"/>
+    <rect x="20" y="74" width="36" height="16" rx="3" ry="3" fill="#ff9900"/>
+    <text x="38" y="86" text-anchor="middle" fill="#232f3e"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="10" font-weight="bold">aws</text>
+    <text x="68" y="86" fill="#ffffff"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">Services</text>
+    <text x="858" y="86" text-anchor="end" fill="#ffffff"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="12">alice@example.com  ·  N. Virginia</text>
+
+    <!-- page title -->
+    <text x="32" y="140" fill="#16191f"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="22" font-weight="bold">IAM ›  Users  ›  alice  ›  Access keys</text>
+    <text x="32" y="166" fill="#5b6770"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">Use access keys to make programmatic calls to AWS from the AWS CLI, Tools for PowerShell, AWS SDKs, or direct AWS API calls.</text>
+
+    <!-- access key panel -->
+    <rect x="32" y="200" width="816" height="240" rx="6" ry="6" fill="#fafafa" stroke="#d5dbdb" stroke-width="1"/>
+    <text x="50" y="230" fill="#16191f"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="15" font-weight="bold">Access key 1 · Created today · Active</text>
+
+    <text x="50" y="270" fill="#5b6770"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="12" font-weight="bold">ACCESS KEY ID</text>
+    <text x="50" y="296" fill="#16191f"
+          font-family="ui-monospace,SF Mono,Menlo,Consolas,monospace" font-size="15">AKIAIOSFODNN7EXAMPLE</text>
+
+    <text x="50" y="338" fill="#5b6770"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="12" font-weight="bold">SECRET ACCESS KEY</text>
+    <text x="540" y="338" fill="#0073bb"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="12">Hide</text>
+    <!-- secret value (target of right-click) -->
+    <rect x="46" y="350" width="540" height="28" rx="4" ry="4" fill="#ffffff" stroke="#aab7b8" stroke-width="1"/>
+    <text x="56" y="370" fill="#16191f"
+          font-family="ui-monospace,SF Mono,Menlo,Consolas,monospace" font-size="15">wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLE</text>
+
+    <!-- warning box -->
+    <rect x="46" y="396" width="780" height="32" rx="4" ry="4" fill="#fff8e1" stroke="#f0c040" stroke-width="1"/>
+    <text x="58" y="416" fill="#7a5a00"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="12">
+      ⚠ This is the only time you can view the secret. Do not share or paste it into untrusted services.
+    </text>
+
+    <!-- ===== right-click context menu (appears ~7s = 0.250) ===== -->
+    <g opacity="0" filter="url(#menuShadow)">
+      <animate attributeName="opacity"
+               values="0;0;1;1;0;0"
+               keyTimes="0;0.243;0.255;0.305;0.32;1"
+               dur="28s" repeatCount="indefinite"/>
+
+      <!-- menu (appears at cursor position around x=300, y=360) -->
+      <rect x="296" y="376" width="186" height="124" rx="6" ry="6" fill="#ffffff" stroke="#bdc1c6" stroke-width="0.5"/>
+
+      <!-- highlight: Copy item (the first item) -->
+      <rect x="300" y="382" width="178" height="24" rx="3" ry="3" fill="#1a73e8">
+        <animate attributeName="opacity"
+                 values="0;0;0;1;1;0;0"
+                 keyTimes="0;0.255;0.262;0.275;0.305;0.32;1"
+                 dur="28s" repeatCount="indefinite"/>
+      </rect>
+
+      <g font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">
+        <!-- Copy (becomes white text when highlighted) -->
+        <text x="312" y="398" fill="#16191f">Copy
+          <animate attributeName="fill"
+                   values="#16191f;#16191f;#16191f;#ffffff;#ffffff;#16191f;#16191f"
+                   keyTimes="0;0.255;0.262;0.275;0.305;0.32;1"
+                   dur="28s" repeatCount="indefinite"/>
+        </text>
+        <text x="472" y="398" text-anchor="end" fill="#5f6368" font-size="11">⌘C
+          <animate attributeName="fill"
+                   values="#5f6368;#5f6368;#5f6368;#ffffff;#ffffff;#5f6368;#5f6368"
+                   keyTimes="0;0.255;0.262;0.275;0.305;0.32;1"
+                   dur="28s" repeatCount="indefinite"/>
+        </text>
+
+        <text x="312" y="422" fill="#16191f">Paste</text>
+        <text x="472" y="422" text-anchor="end" fill="#5f6368" font-size="11">⌘V</text>
+
+        <text x="312" y="446" fill="#16191f">Cut</text>
+        <text x="472" y="446" text-anchor="end" fill="#5f6368" font-size="11">⌘X</text>
+
+        <line x1="304" y1="460" x2="478" y2="460" stroke="#e0e0e0"/>
+
+        <text x="312" y="478" fill="#16191f">Select All</text>
+        <text x="472" y="478" text-anchor="end" fill="#5f6368" font-size="11">⌘A</text>
+      </g>
+    </g>
+
+    <!-- clipboard hint (after copy) -->
+    <g opacity="0">
+      <animate attributeName="opacity"
+               values="0;0;1;1;0;0"
+               keyTimes="0;0.31;0.32;0.345;0.36;1"
+               dur="28s" repeatCount="indefinite"/>
+      <rect x="700" y="350" width="138" height="28" rx="14" ry="14" fill="#16191f"/>
+      <text x="769" y="369" text-anchor="middle" fill="#ffffff"
+            font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="12">📋 Copied to clipboard</text>
+    </g>
+
+    <!-- stage indicator -->
+    <rect x="20" y="563" width="160" height="28" rx="14" ry="14" fill="#1f1f1f"/>
+    <text x="100" y="581" text-anchor="middle" fill="#ffffff"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13" font-weight="bold">STAGE 2 / 4</text>
+    <text x="200" y="581" fill="#3c4043"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">User right-clicks the secret · selects Copy</text>
+  </g>
+
+  <!-- ============================================================== -->
+  <!-- STAGE 3: Claude Desktop — paste & send (10–18s)                -->
+  <!-- ============================================================== -->
+  <g opacity="0">
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.34;0.36;0.625;0.645;1"
+             dur="28s" repeatCount="indefinite"/>
+
+    <!-- shake wrapper: jiggle at click time (~16s = 0.571) -->
+    <g>
+      <animateTransform attributeName="transform" type="translate"
+        values="0,0; 0,0; -7,0; 6,0; -5,0; 4,0; -2,0; 0,0; 0,0"
+        keyTimes="0; 0.566; 0.569; 0.572; 0.575; 0.578; 0.581; 0.584; 1"
+        dur="28s" repeatCount="indefinite"/>
+
+      <!-- window body (Claude Desktop: warm cream) -->
+      <rect width="880" height="600" rx="10" ry="10" fill="#faf9f5"/>
+
+      <!-- title bar -->
+      <path d="M0,10 a10,10 0 0 1 10,-10 h860 a10,10 0 0 1 10,10 v32 h-880 z" fill="#f0ede4"/>
+      <circle cx="22" cy="22" r="6" fill="#f38ba8"/>
+      <circle cx="42" cy="22" r="6" fill="#f9e2af"/>
+      <circle cx="62" cy="22" r="6" fill="#a6e3a1"/>
+      <!-- Claude wordmark -->
+      <text x="440" y="29" text-anchor="middle"
+            font-family="Tiempos,Charter,Georgia,serif" font-size="15" fill="#3d3d3a">Claude</text>
+      <!-- subtle Anthropic-style asterisk near title -->
+      <text x="400" y="29" text-anchor="middle"
+            font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="14" fill="#cc785c">✱</text>
+
+      <!-- sidebar -->
+      <rect x="0" y="42" width="64" height="558" fill="#f3f1ea"/>
+      <text x="32" y="78" text-anchor="middle" font-size="18" fill="#cc785c">✱</text>
+      <text x="32" y="130" text-anchor="middle" font-size="16" fill="#7a766e">+</text>
+      <text x="32" y="170" text-anchor="middle" font-size="14" fill="#7a766e">⌕</text>
+
+      <!-- greeting (visible throughout stage 3 — chat history stays empty because nothing was actually sent) -->
+      <g opacity="0">
+        <animate attributeName="opacity"
+                 values="0;0;1;1;0;0"
+                 keyTimes="0;0.365;0.380;0.580;0.595;1"
+                 dur="28s" repeatCount="indefinite"/>
+        <text x="464" y="240" text-anchor="middle"
+              font-family="Tiempos,Charter,Georgia,serif" font-size="30" fill="#3d3d3a">
+          <tspan fill="#cc785c">✱</tspan>  Good morning, alice
+        </text>
+        <text x="464" y="272" text-anchor="middle"
+              font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="14" fill="#7a766e">
+          What are you working on today?
+        </text>
+        <text x="464" y="304" text-anchor="middle"
+              font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="12" fill="#bdbab2" font-style="italic">
+          (no conversation yet)
+        </text>
+      </g>
+
+      <!-- intercepted banner (after send click + input clears, ~16.5s = 0.589) -->
+      <g opacity="0">
+        <animate attributeName="opacity"
+                 values="0;0;1;1;0;0"
+                 keyTimes="0;0.585;0.605;0.625;0.645;1"
+                 dur="28s" repeatCount="indefinite"/>
+        <rect x="80" y="200" width="780" height="92" rx="8" ry="8" fill="#fdecea" stroke="#d93025" stroke-width="2"/>
+        <text x="100" y="232" fill="#d93025"
+              font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="17" font-weight="bold">
+          🛡  Request blocked · AI-Scan-Interceptor
+        </text>
+        <text x="100" y="256" fill="#3c4043"
+              font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">
+          The request never reached Claude. The chat history is unchanged — nothing was sent.
+        </text>
+        <text x="100" y="276" fill="#3c4043"
+              font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">
+          Policy hit: <tspan font-weight="bold" font-family="ui-monospace,SF Mono,monospace">aws_secret_access_key</tspan> · severity HIGH · matched in your prompt
+        </text>
+      </g>
+
+      <!-- input box -->
+      <rect x="80" y="490" width="780" height="60" rx="14" ry="14" fill="#ffffff" stroke="#e0ddd2" stroke-width="1"/>
+
+      <!-- placeholder (only at start of stage 3) -->
+      <text x="104" y="524" fill="#9e9b94" opacity="0"
+            font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="14">
+        Reply to Claude…
+        <animate attributeName="opacity"
+                 values="0;0;1;1;0;0"
+                 keyTimes="0;0.365;0.380;0.465;0.480;1"
+                 dur="28s" repeatCount="indefinite"/>
+      </text>
+
+      <!-- typed-in (pasted) text — appears after paste, disappears AT send click (16s = 0.571) -->
+      <text x="104" y="524" fill="#1f1f1f" opacity="0"
+            font-family="ui-monospace,SF Mono,Menlo,Consolas,monospace" font-size="13">
+        Help me debug this AWS issue · AWS_SECRET_ACCESS_KEY=<tspan fill="#d93025" font-weight="bold">wJalrXUt…</tspan>
+        <animate attributeName="opacity"
+                 values="0;0;1;1;0;0"
+                 keyTimes="0;0.515;0.530;0.566;0.572;1"
+                 dur="28s" repeatCount="indefinite"/>
+      </text>
+
+      <!-- send button -->
+      <g>
+        <circle cx="824" cy="520" r="18" fill="#cc785c">
+          <animate attributeName="fill"
+                   values="#cc785c;#cc785c;#a85e44;#cc785c;#cc785c"
+                   keyTimes="0;0.568;0.572;0.585;1"
+                   dur="28s" repeatCount="indefinite"/>
+        </circle>
+        <text x="824" y="526" text-anchor="middle" fill="#ffffff" font-size="14">↑</text>
+      </g>
+
+      <!-- ===== right-click context menu (paste, appears ~13.5s = 0.482) ===== -->
+      <g opacity="0" filter="url(#menuShadow)">
+        <animate attributeName="opacity"
+                 values="0;0;1;1;0;0"
+                 keyTimes="0;0.475;0.485;0.515;0.525;1"
+                 dur="28s" repeatCount="indefinite"/>
+
+        <rect x="200" y="450" width="186" height="124" rx="6" ry="6" fill="#ffffff" stroke="#bdc1c6" stroke-width="0.5"/>
+
+        <!-- highlight: Paste item -->
+        <rect x="204" y="480" width="178" height="24" rx="3" ry="3" fill="#1a73e8" opacity="0">
+          <animate attributeName="opacity"
+                   values="0;0;0;1;1;0;0"
+                   keyTimes="0;0.485;0.494;0.504;0.515;0.525;1"
+                   dur="28s" repeatCount="indefinite"/>
+        </rect>
+
+        <g font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">
+          <text x="216" y="472" fill="#16191f">Copy</text>
+          <text x="376" y="472" text-anchor="end" fill="#5f6368" font-size="11">⌘C</text>
+
+          <text x="216" y="496" fill="#16191f">Paste
+            <animate attributeName="fill"
+                     values="#16191f;#16191f;#16191f;#ffffff;#ffffff;#16191f;#16191f"
+                     keyTimes="0;0.485;0.494;0.504;0.515;0.525;1"
+                     dur="28s" repeatCount="indefinite"/>
+          </text>
+          <text x="376" y="496" text-anchor="end" fill="#5f6368" font-size="11">⌘V
+            <animate attributeName="fill"
+                     values="#5f6368;#5f6368;#5f6368;#ffffff;#ffffff;#5f6368;#5f6368"
+                     keyTimes="0;0.485;0.494;0.504;0.515;0.525;1"
+                     dur="28s" repeatCount="indefinite"/>
+          </text>
+
+          <text x="216" y="520" fill="#16191f">Cut</text>
+          <text x="376" y="520" text-anchor="end" fill="#5f6368" font-size="11">⌘X</text>
+
+          <line x1="208" y1="534" x2="382" y2="534" stroke="#e0e0e0"/>
+
+          <text x="216" y="552" fill="#16191f">Select All</text>
+          <text x="376" y="552" text-anchor="end" fill="#5f6368" font-size="11">⌘A</text>
+        </g>
+      </g>
+
+      <!-- stage indicator -->
+      <rect x="20" y="563" width="160" height="28" rx="14" ry="14" fill="#3d3d3a"/>
+      <text x="100" y="581" text-anchor="middle" fill="#faf9f5"
+            font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13" font-weight="bold">STAGE 3 / 4</text>
+      <text x="200" y="581" fill="#3d3d3a"
+            font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">Right-click · Paste · Send → BLOCKED</text>
+    </g>
+  </g>
+
+  <!-- ============================================================== -->
+  <!-- STAGE 4: Admin Dashboard (18–26s)                              -->
+  <!-- ============================================================== -->
+  <g opacity="0">
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0"
+             keyTimes="0;0.625;0.645;0.93;0.95;1"
+             dur="28s" repeatCount="indefinite"/>
+
+    <rect width="880" height="600" rx="10" ry="10" fill="#11111b"/>
+
+    <rect x="0" y="0" width="880" height="48" rx="10" ry="10" fill="#181825"/>
+    <rect x="0" y="38" width="880" height="10" fill="#181825"/>
+    <text x="22" y="30" fill="#cdd6f4"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="15" font-weight="bold">
+      🛡 AI-Scan-Interceptor
+      <tspan fill="#6c7086" font-weight="normal"> · Admin Dashboard</tspan>
+    </text>
+    <text x="858" y="30" text-anchor="end" fill="#9399b2"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="12">admin@secscanpro</text>
+
+    <!-- stat cards -->
+    <g font-family="ui-sans-serif,system-ui,Arial,sans-serif">
+      <rect x="22" y="72" width="270" height="86" rx="8" ry="8" fill="#1e1e2e" stroke="#313244" stroke-width="1"/>
+      <text x="40" y="98" fill="#9399b2" font-size="12">PROMPTS TODAY</text>
+      <text x="40" y="136" fill="#cdd6f4" font-size="28" font-weight="bold">47</text>
+      <text x="100" y="136" fill="#a6e3a1" font-size="12">↑ 12%</text>
+
+      <rect x="305" y="72" width="270" height="86" rx="8" ry="8" fill="#1e1e2e" stroke="#f38ba8" stroke-width="1.5"/>
+      <text x="323" y="98" fill="#f38ba8" font-size="12">BLOCKED</text>
+      <text x="323" y="136" fill="#f38ba8" font-size="28" font-weight="bold">3</text>
+      <text x="376" y="136" fill="#cdd6f4" font-size="12">1 just now</text>
+
+      <rect x="588" y="72" width="270" height="86" rx="8" ry="8" fill="#1e1e2e" stroke="#313244" stroke-width="1"/>
+      <text x="606" y="98" fill="#9399b2" font-size="12">TOP POLICY HIT</text>
+      <text x="606" y="130" fill="#cdd6f4" font-size="16" font-weight="bold"
+            font-family="ui-monospace,SF Mono,Menlo,Consolas,monospace">aws_secret_access_key</text>
+      <text x="606" y="148" fill="#9399b2" font-size="12">2 hits today</text>
+    </g>
+
+    <!-- events table (before click) -->
+    <g opacity="0">
+      <animate attributeName="opacity"
+               values="0;0;1;1;0;0"
+               keyTimes="0;0.640;0.660;0.785;0.800;1"
+               dur="28s" repeatCount="indefinite"/>
+
+      <text x="22" y="190" fill="#9399b2"
+            font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="12" font-weight="bold">
+        RECENT EVENTS — click a row to inspect
+      </text>
+
+      <g font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">
+        <rect x="22" y="202" width="836" height="32" rx="6" ry="6" fill="#181825"/>
+        <text x="40" y="222" fill="#6c7086" font-size="11" font-weight="bold">TIME</text>
+        <text x="140" y="222" fill="#6c7086" font-size="11" font-weight="bold">USER</text>
+        <text x="290" y="222" fill="#6c7086" font-size="11" font-weight="bold">SERVICE</text>
+        <text x="490" y="222" fill="#6c7086" font-size="11" font-weight="bold">POLICY HIT</text>
+        <text x="760" y="222" fill="#6c7086" font-size="11" font-weight="bold">STATUS</text>
+
+        <!-- row 1: BLOCKED (the click target) -->
+        <rect x="22" y="240" width="836" height="40" fill="#3a1f24">
+          <animate attributeName="fill"
+                   values="#3a1f24;#3a1f24;#5a2b30;#3a1f24"
+                   keyTimes="0;0.760;0.770;1"
+                   dur="28s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="22" y="240" width="4" height="40" fill="#f38ba8"/>
+        <text x="40" y="264" fill="#cdd6f4">10:23:41</text>
+        <text x="140" y="264" fill="#cba6f7">alice@example.com</text>
+        <text x="290" y="264" fill="#89b4fa">api.anthropic.com</text>
+        <text x="490" y="264" fill="#cdd6f4" font-family="ui-monospace,SF Mono,Menlo,Consolas,monospace" font-size="12">aws_secret_access_key</text>
+        <rect x="760" y="248" width="78" height="22" rx="11" ry="11" fill="#f38ba8"/>
+        <text x="799" y="264" text-anchor="middle" fill="#1e1e2e" font-size="11" font-weight="bold">BLOCKED</text>
+
+        <!-- row 2 -->
+        <rect x="22" y="286" width="836" height="40" fill="#1e1e2e"/>
+        <text x="40" y="310" fill="#9399b2">10:18:02</text>
+        <text x="140" y="310" fill="#cba6f7">bob@example.com</text>
+        <text x="290" y="310" fill="#89b4fa">api.openai.com</text>
+        <text x="490" y="310" fill="#cdd6f4" font-family="ui-monospace,SF Mono,Menlo,Consolas,monospace" font-size="12">github_personal_token</text>
+        <rect x="760" y="294" width="78" height="22" rx="11" ry="11" fill="#f38ba8" opacity="0.7"/>
+        <text x="799" y="310" text-anchor="middle" fill="#1e1e2e" font-size="11" font-weight="bold">BLOCKED</text>
+
+        <!-- row 3 -->
+        <rect x="22" y="332" width="836" height="40" fill="#1e1e2e"/>
+        <text x="40" y="356" fill="#9399b2">10:09:17</text>
+        <text x="140" y="356" fill="#cba6f7">alice@example.com</text>
+        <text x="290" y="356" fill="#89b4fa">generativelanguage.googleapis.com</text>
+        <text x="490" y="356" fill="#6c7086" font-style="italic">— (clean prompt)</text>
+        <rect x="760" y="340" width="78" height="22" rx="11" ry="11" fill="#a6e3a1"/>
+        <text x="799" y="356" text-anchor="middle" fill="#1e1e2e" font-size="11" font-weight="bold">ALLOWED</text>
+      </g>
+    </g>
+
+    <!-- detail modal (after click, ~21s = 0.75) -->
+    <g opacity="0">
+      <animate attributeName="opacity"
+               values="0;0;1;1;0;0"
+               keyTimes="0;0.785;0.805;0.93;0.95;1"
+               dur="28s" repeatCount="indefinite"/>
+
+      <rect x="0" y="50" width="880" height="498" fill="#000000" opacity="0.4"/>
+      <rect x="40" y="80" width="800" height="468" rx="10" ry="10" fill="#1e1e2e" stroke="#45475a" stroke-width="1"/>
+
+      <text x="60" y="115" fill="#cdd6f4"
+            font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="16" font-weight="bold">Event Detail · 10:23:41</text>
+      <text x="820" y="115" text-anchor="end" fill="#9399b2"
+            font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="18">×</text>
+      <line x1="60" y1="130" x2="820" y2="130" stroke="#313244" stroke-width="1"/>
+
+      <text x="60" y="158" fill="#9399b2"
+            font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="11" font-weight="bold">STATUS</text>
+      <rect x="60" y="170" width="130" height="36" rx="18" ry="18" fill="#f38ba8"/>
+      <text x="125" y="194" text-anchor="middle" fill="#1e1e2e"
+            font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="16" font-weight="bold">BLOCKED</text>
+      <text x="205" y="194" fill="#9399b2"
+            font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">request never reached the AI service</text>
+
+      <g font-family="ui-monospace,SF Mono,Menlo,Consolas,monospace" font-size="13">
+        <text x="60" y="240" fill="#9399b2">user</text>
+        <text x="180" y="240" fill="#cba6f7">alice@example.com</text>
+
+        <text x="60" y="262" fill="#9399b2">service</text>
+        <text x="180" y="262" fill="#89b4fa">api.anthropic.com</text>
+        <text x="430" y="262" fill="#6c7086">(Claude Desktop)</text>
+
+        <text x="60" y="284" fill="#9399b2">policy_hit</text>
+        <text x="180" y="284" fill="#f9e2af">aws_secret_access_key</text>
+        <text x="370" y="284" fill="#6c7086">severity: <tspan fill="#f38ba8" font-weight="bold">HIGH</tspan></text>
+
+        <text x="60" y="306" fill="#9399b2">notified</text>
+        <text x="180" y="306" fill="#a6e3a1">Slack #security-alerts</text>
+        <text x="370" y="306" fill="#6c7086">webhook · SMTP relay</text>
+      </g>
+
+      <text x="60" y="350" fill="#9399b2"
+            font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="11" font-weight="bold">INTERCEPTED PROMPT</text>
+      <rect x="60" y="362" width="760" height="148" rx="6" ry="6" fill="#11111b" stroke="#313244" stroke-width="1"/>
+      <g font-family="ui-monospace,SF Mono,Menlo,Consolas,monospace" font-size="13">
+        <text x="76" y="386" fill="#cdd6f4">Help me debug this AWS connection issue.</text>
+        <text x="76" y="408" fill="#cdd6f4">My role can't access S3 — what should I check?</text>
+        <text x="76" y="430" fill="#6c7086" font-size="11">credentials I'm using:</text>
+        <text x="76" y="452" fill="#cdd6f4">AWS_ACCESS_KEY_ID=<tspan font-weight="bold">AKIAIOSFODNN7EXAMPLE</tspan></text>
+        <text x="76" y="474" fill="#cdd6f4">AWS_SECRET_ACCESS_KEY=<tspan fill="#f38ba8" font-weight="bold">wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLE</tspan></text>
+        <text x="76" y="497" fill="#6c7086" font-size="11">↑ matched by policy aws_secret_access_key</text>
+      </g>
+    </g>
+
+    <rect x="20" y="563" width="160" height="28" rx="14" ry="14" fill="#313244"/>
+    <text x="100" y="581" text-anchor="middle" fill="#cdd6f4"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13" font-weight="bold">STAGE 4 / 4</text>
+    <text x="200" y="581" fill="#9399b2"
+          font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">Admin clicks the event to inspect what was blocked</text>
+  </g>
+
+  <!-- ============================================================== -->
+  <!-- MOUSE CURSOR (over stages 2, 3, 4)                             -->
+  <!-- ============================================================== -->
+  <g>
+    <animate attributeName="opacity"
+             values="0;0;1;1;0;0;1;1;0;0;1;1;0;0"
+             keyTimes="0;0.155;0.170;0.34;0.345;0.36;0.380;0.625;0.635;0.66;0.680;0.93;0.95;1"
+             dur="28s" repeatCount="indefinite"/>
+
+    <!-- right-click ripple at AWS secret value (~7s = 0.250), gray for right-click -->
+    <circle cx="306" cy="364" r="0" fill="none" stroke="#6c7086" stroke-width="2" opacity="0">
+      <animate attributeName="r" values="0;0;26;0" keyTimes="0;0.247;0.260;0.270" dur="28s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0;0.8;0;0" keyTimes="0;0.247;0.250;0.270;1" dur="28s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- right-click ripple at Claude input box (~13s = 0.464), gray -->
+    <circle cx="210" cy="520" r="0" fill="none" stroke="#6c7086" stroke-width="2" opacity="0">
+      <animate attributeName="r" values="0;0;26;0" keyTimes="0;0.461;0.474;0.484" dur="28s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0;0.8;0;0" keyTimes="0;0.461;0.464;0.484;1" dur="28s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- left-click ripple at send button (~16s = 0.571), orange (Claude accent) -->
+    <circle cx="824" cy="520" r="0" fill="none" stroke="#cc785c" stroke-width="2" opacity="0">
+      <animate attributeName="r" values="0;0;28;0" keyTimes="0;0.566;0.580;0.590" dur="28s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0;0.8;0;0" keyTimes="0;0.566;0.570;0.590;1" dur="28s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- left-click ripple at blocked row in stage 4 (~21s = 0.75), pink -->
+    <circle cx="300" cy="260" r="0" fill="none" stroke="#f38ba8" stroke-width="2" opacity="0">
+      <animate attributeName="r" values="0;0;38;0" keyTimes="0;0.747;0.760;0.770" dur="28s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;0;0.8;0;0" keyTimes="0;0.747;0.752;0.770;1" dur="28s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- cursor arrow -->
+    <g>
+      <animateTransform attributeName="transform" type="translate"
+        values="
+          440,300 ;
+          440,300 ;
+          300,360 ;
+          300,360 ;
+          300,360 ;
+          440,300 ;
+          210,520 ;
+          210,520 ;
+          210,520 ;
+          824,520 ;
+          824,520 ;
+          440,200 ;
+          300,260 ;
+          300,260 ;
+          300,260 ;
+          300,260
+        "
+        keyTimes="
+          0;
+          0.170;
+          0.240;
+          0.270;
+          0.330;
+          0.360;
+          0.430;
+          0.475;
+          0.510;
+          0.570;
+          0.625;
+          0.680;
+          0.760;
+          0.770;
+          0.930;
+          1
+        "
+        dur="28s" repeatCount="indefinite"/>
+
+      <path d="M0,0 L0,18 L5,14 L8,21 L11,20 L8,13 L13,13 Z"
+            fill="#ffffff" stroke="#000000" stroke-width="1.2" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

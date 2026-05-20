@@ -9,6 +9,8 @@
 
 [English README](./README.en.md) | 日本語
 
+![AI-Scan-Interceptor demo](./assets/demo.svg)
+
 ---
 
 ## なぜ AI-Scan-Interceptor が必要か
