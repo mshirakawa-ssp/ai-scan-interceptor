@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-05-20
+
+### Added
+
+- Architecture diagram as a clean SVG (`assets/architecture.svg`), embedded
+  in `README.md` / `README.en.md`, replacing the previous ASCII art
+  rendering. The diagram shows endpoint devices (Windows / macOS / Linux /
+  iOS / Android) → AI-Scan-Interceptor gateway → external AI services
+  (Anthropic / OpenAI / Google Gemini), with a side branch for blocked
+  prompts.
+
+### Changed
+
+- Endpoint coverage description now explicitly includes iOS and Android
+  (both support manual HTTPS_PROXY configuration).
+
 ## [0.1.1] - 2026-05-20
 
 ### Added
@@ -61,6 +77,7 @@ This is the first public release. Detection rules are intentionally
 straightforward (regex + keyword). Classifier-based detection and additional
 AI-service support (Mistral, Cohere, local LLM frontends) are on the roadmap.
 
-[Unreleased]: https://github.com/mshirakawa-ssp/ai-scan-interceptor/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/mshirakawa-ssp/ai-scan-interceptor/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/mshirakawa-ssp/ai-scan-interceptor/releases/tag/v0.1.2
 [0.1.1]: https://github.com/mshirakawa-ssp/ai-scan-interceptor/releases/tag/v0.1.1
 [0.1.0]: https://github.com/mshirakawa-ssp/ai-scan-interceptor/releases/tag/v0.1.0

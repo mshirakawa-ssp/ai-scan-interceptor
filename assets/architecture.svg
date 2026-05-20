@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 480" role="img"
+     aria-label="AI-Scan-Interceptor architecture: prompts from your endpoint devices (Windows, macOS, Linux, iOS, Android) pass through this gateway, which applies policy rules. Allowed prompts continue to external AI services (Anthropic, OpenAI, Gemini). Blocked prompts are dropped and alerted.">
+  <title>AI-Scan-Interceptor — architecture</title>
+  <desc>Simple vertical flow showing endpoint devices (desktop and mobile OSes) → AI-Scan-Interceptor gateway → external AI services, with a side branch for blocked prompts.</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,4 L0,8 z" fill="#a6adc8"/>
+    </marker>
+    <marker id="arrowAllow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,4 L0,8 z" fill="#a6e3a1"/>
+    </marker>
+    <marker id="arrowBlock" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L10,4 L0,8 z" fill="#f38ba8"/>
+    </marker>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#11111b"/>
+      <stop offset="1" stop-color="#181825"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="880" height="480" rx="12" ry="12" fill="url(#bgGrad)"/>
+
+  <!-- title -->
+  <text x="440" y="34" text-anchor="middle" fill="#cdd6f4"
+        font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="18" font-weight="bold">
+    Architecture
+  </text>
+  <text x="440" y="54" text-anchor="middle" fill="#9399b2"
+        font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="12">
+    Every prompt passes through the gateway before reaching an external AI.
+  </text>
+
+  <!-- ============================================================== -->
+  <!-- 1. Endpoints                                                    -->
+  <!-- ============================================================== -->
+  <g font-family="ui-sans-serif,system-ui,Arial,sans-serif">
+    <!-- 5 boxes, 124 wide, 10 gap, centered: total 660 → start x=110 -->
+    <rect x="110" y="86" width="124" height="44" rx="6" ry="6" fill="#1e1e2e" stroke="#89b4fa" stroke-width="1"/>
+    <text x="172" y="113" text-anchor="middle" fill="#89b4fa" font-size="13" font-weight="bold">Windows</text>
+
+    <rect x="244" y="86" width="124" height="44" rx="6" ry="6" fill="#1e1e2e" stroke="#89b4fa" stroke-width="1"/>
+    <text x="306" y="113" text-anchor="middle" fill="#89b4fa" font-size="13" font-weight="bold">macOS</text>
+
+    <rect x="378" y="86" width="124" height="44" rx="6" ry="6" fill="#1e1e2e" stroke="#89b4fa" stroke-width="1"/>
+    <text x="440" y="113" text-anchor="middle" fill="#89b4fa" font-size="13" font-weight="bold">Linux</text>
+
+    <rect x="512" y="86" width="124" height="44" rx="6" ry="6" fill="#1e1e2e" stroke="#89b4fa" stroke-width="1"/>
+    <text x="574" y="113" text-anchor="middle" fill="#89b4fa" font-size="13" font-weight="bold">iOS</text>
+
+    <rect x="646" y="86" width="124" height="44" rx="6" ry="6" fill="#1e1e2e" stroke="#89b4fa" stroke-width="1"/>
+    <text x="708" y="113" text-anchor="middle" fill="#89b4fa" font-size="13" font-weight="bold">Android</text>
+
+    <text x="20" y="113" fill="#6c7086" font-size="11" font-weight="bold" letter-spacing="1">ENDPOINTS</text>
+    <text x="20" y="126" fill="#45475a" font-size="9" font-style="italic">desktop + mobile</text>
+  </g>
+
+  <!-- arrow down -->
+  <line x1="440" y1="138" x2="440" y2="186" stroke="#a6adc8" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ============================================================== -->
+  <!-- 2. Gateway (the product)                                        -->
+  <!-- ============================================================== -->
+  <rect x="120" y="194" width="640" height="146" rx="14" ry="14" fill="#1e1e2e" stroke="#cba6f7" stroke-width="2"/>
+
+  <text x="440" y="222" text-anchor="middle" fill="#cba6f7"
+        font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="17" font-weight="bold">
+    AI-Scan-Interceptor
+  </text>
+  <text x="440" y="242" text-anchor="middle" fill="#9399b2"
+        font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="11" font-style="italic">
+    self-hosted on your network · Docker Compose · AGPL-3.0
+  </text>
+
+  <line x1="180" y1="256" x2="700" y2="256" stroke="#313244" stroke-width="1"/>
+
+  <g font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="13">
+    <text x="160" y="282" fill="#cdd6f4">
+      <tspan fill="#a6e3a1">●</tspan>  Chrome JA3 mimicry (uTLS) — intercepts Anthropic / OpenAI / Gemini traffic
+    </text>
+    <text x="160" y="304" fill="#cdd6f4">
+      <tspan fill="#f9e2af">●</tspan>  ICAP policy engine — 24 rules (PII · secrets · confidentiality · internal)
+    </text>
+    <text x="160" y="326" fill="#cdd6f4">
+      <tspan fill="#89b4fa">●</tspan>  mTLS endpoint identity, live dashboard, Slack / webhook / SMTP alerts
+    </text>
+  </g>
+
+  <!-- ============================================================== -->
+  <!-- 3a. Allow branch (forward to external) — DOWN                  -->
+  <!-- ============================================================== -->
+  <line x1="440" y1="346" x2="440" y2="396" stroke="#a6e3a1" stroke-width="2.5" marker-end="url(#arrowAllow)"/>
+  <text x="452" y="378" fill="#a6e3a1"
+        font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="12" font-weight="bold">ALLOW</text>
+
+  <!-- ============================================================== -->
+  <!-- 3b. Block branch (dropped) — RIGHT                              -->
+  <!-- ============================================================== -->
+  <line x1="760" y1="267" x2="816" y2="267" stroke="#f38ba8" stroke-width="2" stroke-dasharray="6 3" marker-end="url(#arrowBlock)"/>
+  <text x="822" y="252" fill="#f38ba8"
+        font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="11" font-weight="bold">BLOCK</text>
+  <circle cx="836" cy="276" r="11" fill="none" stroke="#f38ba8" stroke-width="2"/>
+  <line x1="828" y1="268" x2="844" y2="284" stroke="#f38ba8" stroke-width="2"/>
+  <text x="850" y="276" fill="#9399b2"
+        font-family="ui-sans-serif,system-ui,Arial,sans-serif" font-size="10" text-anchor="end">dropped</text>
+
+  <!-- ============================================================== -->
+  <!-- 4. External AI services                                         -->
+  <!-- ============================================================== -->
+  <g font-family="ui-sans-serif,system-ui,Arial,sans-serif">
+    <text x="80" y="423" fill="#6c7086" font-size="11" font-weight="bold" letter-spacing="1">EXTERNAL AI</text>
+
+    <rect x="220" y="402" width="150" height="46" rx="6" ry="6" fill="#1e1e2e" stroke="#cc785c" stroke-width="1.5"/>
+    <text x="295" y="423" text-anchor="middle" fill="#cc785c" font-size="13" font-weight="bold">Anthropic</text>
+    <text x="295" y="438" text-anchor="middle" fill="#6c7086" font-size="10" font-family="ui-monospace,SF Mono,monospace">api.anthropic.com</text>
+
+    <rect x="380" y="402" width="150" height="46" rx="6" ry="6" fill="#1e1e2e" stroke="#74aa9c" stroke-width="1.5"/>
+    <text x="455" y="423" text-anchor="middle" fill="#74aa9c" font-size="13" font-weight="bold">OpenAI</text>
+    <text x="455" y="438" text-anchor="middle" fill="#6c7086" font-size="10" font-family="ui-monospace,SF Mono,monospace">api.openai.com</text>
+
+    <rect x="540" y="402" width="150" height="46" rx="6" ry="6" fill="#1e1e2e" stroke="#4285f4" stroke-width="1.5"/>
+    <text x="615" y="423" text-anchor="middle" fill="#4285f4" font-size="13" font-weight="bold">Google Gemini</text>
+    <text x="615" y="438" text-anchor="middle" fill="#6c7086" font-size="10" font-family="ui-monospace,SF Mono,monospace">generativelanguage.…</text>
+  </g>
+</svg>

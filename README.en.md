@@ -44,40 +44,11 @@ Most existing DLP and proxy products that address this are cloud-only, opaque, e
 
 ## Architecture
 
-```
-[Endpoint] (Windows / macOS / Linux)
-    │  HTTPS_PROXY=ai-scan-connect:port
-    ▼
-┌─────────────────────────────────────────────┐
-│  ai-scan-connect (CA delivery + mTLS client)│
-└─────────────────────────────────────────────┘
-    │  mTLS
-    ▼
-┌─────────────────────────────────────────────┐
-│  tls-proxy :3128 (Go + uTLS)                │
-│    ├─ Anthropic Claude  → direct extract    │
-│    └─ Others (OpenAI etc.)                  │
-└─────────────────────────────────────────────┘
-                                  │
-                                  ▼
-              ┌────────────────────────────────┐
-              │  squid :3129 (TLS Bump)         │
-              └────────────────────────────────┘
-                                  │  ICAP REQMOD
-                                  ▼
-              ┌────────────────────────────────┐
-              │  icap-server :1344 (Go)         │
-              │    - prompt extraction          │
-              │    - policy evaluation          │
-              │    - logging / alerting         │
-              └────────────────────────────────┘
-                                  │
-                                  ▼
-                        ┌──────────────────┐
-                        │  webui :8080      │
-                        │  (dashboard)      │
-                        └──────────────────┘
-```
+![Architecture](./assets/architecture.svg)
+
+Every prompt from your endpoints (Windows / macOS / Linux / iOS / Android) passes through a gateway you operate. An ICAP-based policy engine applies 24 detection rules (PII, secrets, confidentiality, internal resources) and drops the request at the network egress on a hit; only allowed prompts are forwarded to external AI services (Anthropic / OpenAI / Google Gemini).
+
+Implementation details live in each component's README: `tls-proxy/`, `icap-server/`, `connect/`, `webui/`.
 
 ---
 
